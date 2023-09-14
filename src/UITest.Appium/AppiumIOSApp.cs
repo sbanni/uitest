@@ -1,5 +1,5 @@
 ﻿using OpenQA.Selenium.Appium;
-using OpenQA.Selenium.Appium.Android;
+using OpenQA.Selenium.Appium.iOS;
 using OpenQA.Selenium.Appium.Enums;
 using UITest.Core;
 
@@ -8,7 +8,7 @@ namespace UITest.Appium
     public class AppiumIOSApp : AppiumApp, IIOSApp
     {
         public AppiumIOSApp(Uri remoteAddress, IConfig config)
-            : base(new AndroidDriver(remoteAddress, GetOptions(config)), config)
+            : base(new IOSDriver(remoteAddress, GetOptions(config)), config)
         {
             _commandExecutor.AddCommandGroup(new AppiumIOSPointerActions(this));
         }
