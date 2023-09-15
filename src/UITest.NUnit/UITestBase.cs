@@ -21,11 +21,9 @@ namespace UITest.Appium.NUnit
 //#endif
     public abstract class UITestBase : UITestContextBase
     {
-        readonly TestDevice _testDevice;
-
-        public UITestBase(TestDevice testDevice)
+        public UITestBase(TestDevice testDevice) 
+            : base(testDevice)
         {
-            _testDevice = testDevice;
         }
 
         protected virtual void FixtureSetup() { }

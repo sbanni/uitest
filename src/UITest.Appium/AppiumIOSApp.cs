@@ -1,10 +1,11 @@
 ﻿using OpenQA.Selenium.Appium;
-using OpenQA.Selenium.Appium.iOS;
 using OpenQA.Selenium.Appium.Enums;
+using OpenQA.Selenium.Appium.iOS;
 using UITest.Core;
 
 namespace UITest.Appium
 {
+    // https://appium.github.io/appium-xcuitest-driver/5.0/capabilities/
     public class AppiumIOSApp : AppiumApp, IIOSApp
     {
         public AppiumIOSApp(Uri remoteAddress, IConfig config)

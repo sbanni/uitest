@@ -12,7 +12,7 @@ namespace UITest.Appium
         readonly List<AppiumUIClientContext> _contexts = new(); // Since tests don't know when they are done, we need to keep track of all the contexts we create so we can dispose them
         readonly TimeSpan _maxServerWaitTime = TimeSpan.FromSeconds(15);
         readonly object _serverLock = new object();
-        public AppiumLocalService? _server;
+        AppiumLocalService? _server;
 
         public IUIClientContext CreateUIClientContext(IConfig config)
         {
@@ -28,8 +28,6 @@ namespace UITest.Appium
             int retries = 0;
 
             var testDevice = config.GetProperty<TestDevice>("TestDevice");
-            IApp app;
-
             var driverUri = new Uri($"http://localhost:{Port}/wd/hub");
 
             while (true)
@@ -37,15 +35,18 @@ namespace UITest.Appium
                 try
                 {
                     // TODO: Create these IApp instances should not be hardcoded types
-                    app = testDevice switch
+                    IApp app = testDevice switch
                     {
                         TestDevice.Mac => new AppiumCatalystApp(driverUri, config),
                         TestDevice.Windows => new AppiumWindowsApp(driverUri, config),
-                        TestDevice.Android => new AppiumAndroidApp(driverUri, config),
+                        TestDevice.Android => AppiumAndroidApp.CreateAndroidApp(driverUri, config),
                         TestDevice.iOS => new AppiumIOSApp(driverUri, config),
                         _ => throw new InvalidOperationException("Unknown test device"),
                     };
-                    break;
+
+                    var newContext = new AppiumUIClientContext(app, config);
+                    _contexts.Add(newContext);
+                    return newContext;
                 }
                 catch (WebDriverException)
                 {
@@ -60,10 +61,6 @@ namespace UITest.Appium
                     }
                 }
             }
-
-            var newContext = new AppiumUIClientContext(app, config);
-            _contexts.Add(newContext);
-            return newContext;
         }
 
         public void CreateAndStartServer(int port = Port)

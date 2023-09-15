@@ -5,9 +5,9 @@ using UITest.Core;
 namespace SampleTestLibrary
 {
     [TestFixture(TestDevice.Windows)]
-    public class SampleBaseClass : UITestBase
+    public class SampleBaseClassWindows : UITestBase
     {
-        public SampleBaseClass(TestDevice testDevice) 
+        public SampleBaseClassWindows(TestDevice testDevice) 
             : base(testDevice)
         {
         }

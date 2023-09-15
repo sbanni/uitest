@@ -3,9 +3,9 @@ using UITest.Core;
 
 namespace SampleTestLibrary
 {
-    public class SampleTestClassOne : SampleBaseClass
+    public class SampleTestClassOne : SampleBaseClassWindows
     {
-        public SampleTestClassOne(TestDevice testDevice) 
+        public SampleTestClassOne(TestDevice testDevice)
             : base(testDevice)
         {
         }
@@ -13,7 +13,19 @@ namespace SampleTestLibrary
         [Test]
         public void Test()
         {
-            Assert.Pass();
+        }
+    }
+
+    public class SampleAndroidTestClassOne : SampleBaseClassAndroid
+    {
+        public SampleAndroidTestClassOne(TestDevice testDevice)
+            : base(testDevice)
+        {
+        }
+
+        [Test]
+        public void Test()
+        {
         }
     }
 }

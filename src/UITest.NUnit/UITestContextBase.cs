@@ -5,7 +5,14 @@ namespace UITest.Appium.NUnit
     public abstract class UITestContextBase
     {
         static IUIClientContext? _uiTestContext;
-        private IServerContext? _context;
+        IServerContext? _context;
+        protected TestDevice _testDevice;
+
+
+        public UITestContextBase(TestDevice testDevice)
+        {
+            _testDevice = testDevice;
+        }
 
         protected static IUIClientContext? UITestContext { get { return _uiTestContext; } }
         protected static TestDevice Device 
@@ -49,6 +56,7 @@ namespace UITest.Appium.NUnit
         private void InitialSetup(IServerContext context, bool reset)
         {
             var testConfig = GetTestConfig();
+            testConfig.SetProperty("TestDevice", _testDevice);
 
             // Check to see if we have a context already from a previous test and re-use it as creating the driver is expensive
             if (reset || _uiTestContext == null)

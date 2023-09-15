@@ -3,7 +3,7 @@ using UITest.Core;
 
 namespace SampleTestLibrary
 {
-    public class SampleTestClassTwo : SampleBaseClass
+    public class SampleTestClassTwo : SampleBaseClassWindows
     {
         public SampleTestClassTwo(TestDevice testDevice) 
             : base(testDevice)
@@ -13,7 +13,6 @@ namespace SampleTestLibrary
         [Test]
         public void Test()
         {
-            Assert.Pass();
         }
     }
 }

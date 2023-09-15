@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UITest.Core\UITest.Core.csproj" />
+    <ProjectReference Include="..\UITest.Simulator\UITest.Simulator.csproj" />
   </ItemGroup>
 
 </Project>
