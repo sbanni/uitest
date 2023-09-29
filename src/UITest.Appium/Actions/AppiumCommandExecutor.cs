@@ -11,16 +11,17 @@ namespace UITest.Appium
             _commands.Push(commandExecuteGroup);
         }
 
-        public void Execute(string commandName, IDictionary<string, object> parameters)
+        public CommandResponse Execute(string commandName, IDictionary<string, object> parameters)
         {
             foreach (var command in _commands)
             {
                 if (command.IsCommandSupported(commandName))
                 {
-                    command.Execute(commandName, parameters);
-                    return;
+                    return command.Execute(commandName, parameters);
                 }
             }
+
+            return CommandResponse.FailedEmptyResponse;
         }
     }
 }

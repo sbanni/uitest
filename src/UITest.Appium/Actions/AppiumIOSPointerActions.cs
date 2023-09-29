@@ -21,49 +21,48 @@ namespace UITest.Appium
 
         public bool IsCommandSupported(string commandName)
         {
-            return _commands.Contains(commandName.ToLowerInvariant());
+            return _commands.Contains(commandName, StringComparer.OrdinalIgnoreCase);
         }
 
-        public void Execute(string commandName, IDictionary<string, object> parameters)
+        public CommandResponse Execute(string commandName, IDictionary<string, object> parameters)
         {
-            if (!IsCommandSupported(commandName))
+            return commandName switch
             {
-                return;
-            }
-
-            switch (commandName)
-            {
-                case DoubleClickCommand:
-                    DoubleClick(parameters);
-                    break;
-                case DragAndDropCommand:
-                    DragAndDrop(parameters);
-                    break;
-            }
+                DoubleClickCommand => DoubleClick(parameters),
+                DragAndDropCommand => DragAndDrop(parameters),
+                _ => CommandResponse.FailedEmptyResponse,
+            };
         }
 
-        void DoubleClick(IDictionary<string, object> parameters)
+        CommandResponse DoubleClick(IDictionary<string, object> parameters)
         {
-            var element = (AppiumElement)parameters["element"];
+            var element = GetAppiumElement(parameters["element"]);
 
-            _appiumApp.Driver.ExecuteScript("mobile: doubleTap", new Dictionary<string, object>
+            if (element != null)
+            {
+                _appiumApp.Driver.ExecuteScript("mobile: doubleTap", new Dictionary<string, object>
                 {
-                    { "elementId", element.GetProperty("id") },
+                    { "elementId", element.Id },
                 });
+            }
+
+            return CommandResponse.SuccessEmptyResponse;
         }
 
-        void DragAndDrop(IDictionary<string, object> actionParams)
+        CommandResponse DragAndDrop(IDictionary<string, object> actionParams)
         {
-            var sourceElement = (AppiumElement)actionParams["sourceElement"];
-            var destinationElement = (AppiumElement)actionParams["destinationElement"];
+            AppiumElement? sourceAppiumElement = GetAppiumElement(actionParams["sourceElement"]);
+            AppiumElement? destinationAppiumElement = GetAppiumElement(actionParams["destinationElement"]);
 
-            var sourceCenterX = sourceElement.Location.X + (sourceElement.Size.Width / 2);
-            var sourceCenterY = sourceElement.Location.Y + (sourceElement.Size.Height / 2);
-            var destCenterX = destinationElement.Location.X + (destinationElement.Size.Width / 2);
-            var destCenterY = destinationElement.Location.Y + (destinationElement.Size.Height / 2);
+            if (sourceAppiumElement != null && destinationAppiumElement != null)
+            {
+                var sourceCenterX = sourceAppiumElement.Location.X + (sourceAppiumElement.Size.Width / 2);
+                var sourceCenterY = sourceAppiumElement.Location.Y + (sourceAppiumElement.Size.Height / 2);
+                var destCenterX = destinationAppiumElement.Location.X + (destinationAppiumElement.Size.Width / 2);
+                var destCenterY = destinationAppiumElement.Location.Y + (destinationAppiumElement.Size.Height / 2);
 
-            // iOS doesn't seem to work with the action API, so we are using script calls
-            _appiumApp.Driver.ExecuteScript("mobile: dragFromToWithVelocity", new Dictionary<string, object>
+                // iOS doesn't seem to work with the action API, so we are using script calls
+                _appiumApp.Driver.ExecuteScript("mobile: dragFromToWithVelocity", new Dictionary<string, object>
                 {
                     { "pressDuration", 1 }, // Length of time to hold after click before start dragging
 					{ "holdDuration", .1 }, // Length of time to hold before releasing
@@ -74,6 +73,23 @@ namespace UITest.Appium
                     { "toX", destCenterX },
                     { "toY", destCenterY }
                 });
+                return CommandResponse.SuccessEmptyResponse;
+            }
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        static AppiumElement? GetAppiumElement(object element)
+        {
+            if (element is AppiumElement appiumElement)
+            {
+                return appiumElement;
+            }
+            else if (element is AppiumDriverElement driverElement)
+            {
+                return driverElement.AppiumElement;
+            }
+
+            return null;
         }
 
         static int CalculateDurationForSwipe(int startX, int startY, int endX, int endY, int pixelsPerSecond)

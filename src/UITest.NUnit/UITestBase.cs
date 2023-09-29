@@ -26,9 +26,31 @@ namespace UITest.Appium.NUnit
         {
         }
 
-        protected virtual void FixtureSetup() { }
+        [SetUp]
+        public void RecordTestSetup()
+        {
+            var name = TestContext.CurrentContext.Test.MethodName ?? TestContext.CurrentContext.Test.Name;
+            TestContext.Progress.WriteLine($">>>>> {DateTime.Now} {name} Start");
+        }
 
-        protected virtual void FixtureTeardown() { }
+        [TearDown]
+        public void RecordTestTeardown()
+        {
+            var name = TestContext.CurrentContext.Test.MethodName ?? TestContext.CurrentContext.Test.Name;
+            TestContext.Progress.WriteLine($">>>>> {DateTime.Now} {name} Stop");
+        }
+
+        protected virtual void FixtureSetup()
+        {
+            var name = TestContext.CurrentContext.Test.MethodName ?? TestContext.CurrentContext.Test.Name;
+            TestContext.Progress.WriteLine($">>>>> {DateTime.Now} {nameof(FixtureSetup)} for {name}");
+        }
+
+        protected virtual void FixtureTeardown()
+        {
+            var name = TestContext.CurrentContext.Test.MethodName ?? TestContext.CurrentContext.Test.Name;
+            TestContext.Progress.WriteLine($">>>>> {DateTime.Now} {nameof(FixtureTeardown)} for {name}");
+        }
 
         [TearDown]
         public void UITestBaseTearDown()
@@ -57,7 +79,7 @@ namespace UITest.Appium.NUnit
             InitialSetup(UITestContextSetupFixture.ServerContext);
             try
             {
-                SaveDiagnosticLogs("BeforeFixtureSetup");
+                //SaveDiagnosticLogs("BeforeFixtureSetup");
                 FixtureSetup();
             }
             catch

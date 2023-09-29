@@ -9,7 +9,7 @@ namespace UITest.Appium
         {
         }
 
-        public override IElement ById(string id)
+        public override IReadOnlyCollection<IUIElement> ById(string id)
         {
             // Android needs to be in the form of "{appId}:id/{id}"
             // e.g. com.microsoft.maui.uitests:id/navigationlayout_appbar

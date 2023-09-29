@@ -2,7 +2,6 @@
 {
     public interface ICommandExecution
     {
-        void AddCommandGroup(ICommandExecutionGroup commandExecuteGroup);
-        void Execute(string commandName, IDictionary<string, object> parameters);
+        CommandResponse Execute(string commandName, IDictionary<string, object> parameters);
     }
 }

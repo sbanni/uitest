@@ -3,7 +3,7 @@ using UITest.Core;
 
 namespace UITest.Appium
 {
-    public class AppiumDriverElement : IElement
+    public class AppiumDriverElement : IUIElement
     {
         readonly AppiumElement _element;
         readonly AppiumApp _appiumApp;
@@ -14,54 +14,33 @@ namespace UITest.Appium
             _element = element ?? throw new ArgumentNullException(nameof(element));
         }
 
-        public IElement ById(string id)
+        public ICommandExecution Command => _appiumApp.CommandExecutor;
+
+        internal AppiumElement AppiumElement { get { return _element; } }
+
+        public IReadOnlyCollection<IUIElement> ById(string id)
         {
-            return AppiumQuery.ById(id).FindElement(_element, _appiumApp);
+            return AppiumQuery.ById(id).FindElements(_element, _appiumApp);
         }
 
-        public IElement ByClass(string className)
+        public IReadOnlyCollection<IUIElement> ByClass(string className)
         {
-            return AppiumQuery.ByClass(className).FindElement(_element, _appiumApp);
+            return AppiumQuery.ByClass(className).FindElements(_element, _appiumApp);
         }
 
-        public IElement ByName(string name)
+        public IReadOnlyCollection<IUIElement> ByName(string name)
         {
-            return AppiumQuery.ByName(name).FindElement(_element, _appiumApp);
+            return AppiumQuery.ByName(name).FindElements(_element, _appiumApp);
         }
 
-        public IElement ByAccessibilityId(string id)
+        public IReadOnlyCollection<IUIElement> ByAccessibilityId(string id)
         {
-            return AppiumQuery.ByAccessibilityId(id).FindElement(_element, _appiumApp);
+            return AppiumQuery.ByAccessibilityId(id).FindElements(_element, _appiumApp);
         }
 
-        public IElement ByQuery(string query)
+        public IReadOnlyCollection<IUIElement> ByQuery(string query)
         {
-            return new AppiumQuery(query).FindElement(_element, _appiumApp);
-        }
-
-        public virtual void Click()
-        {
-            _appiumApp.CommandExecutor.Execute("click", new Dictionary<string, object>()
-            {
-                { "element", _element }
-            });
-        }
-
-        public virtual void SendKeys(string text)
-        {
-            _appiumApp.CommandExecutor.Execute("sendKeys", new Dictionary<string, object>()
-            {
-                { "element", _element },
-                { "text", text }
-            });
-        }
-
-        public virtual void Clear()
-        {
-            _appiumApp.CommandExecutor.Execute("clear", new Dictionary<string, object>()
-            {
-                { "element", _element },
-            });
+            return new AppiumQuery(query).FindElements(_element, _appiumApp);
         }
     }
 }

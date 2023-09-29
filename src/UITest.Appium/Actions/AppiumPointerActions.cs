@@ -1,8 +1,10 @@
-﻿using OpenQA.Selenium.Appium.Interactions;
-using OpenQA.Selenium.Interactions;
-using OpenQA.Selenium;
+﻿using System.Diagnostics;
 using System.Drawing;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Interactions;
+using OpenQA.Selenium.Appium.MultiTouch;
+using OpenQA.Selenium.Interactions;
 using UITest.Core;
 
 namespace UITest.Appium
@@ -12,13 +14,15 @@ namespace UITest.Appium
         const string ClickCommand = "click";
         const string DoubleClickCommand = "doubleClick";
         const string DragAndDropCommand = "dragAndDrop";
+        const string ScrollToCommand = "scrollTo";
 
         readonly AppiumApp _appiumApp;
         readonly List<string> _commands = new()
         {
             ClickCommand,
             DoubleClickCommand,
-            DragAndDropCommand
+            DragAndDropCommand,
+            ScrollToCommand,
         };
 
         public AppiumPointerActions(AppiumApp appiumApp)
@@ -28,59 +32,58 @@ namespace UITest.Appium
 
         public bool IsCommandSupported(string commandName)
         {
-            return _commands.Contains(commandName.ToLowerInvariant());
+            return _commands.Contains(commandName, StringComparer.OrdinalIgnoreCase);
         }
 
-        public void Execute(string commandName, IDictionary<string, object> parameters)
+        public CommandResponse Execute(string commandName, IDictionary<string, object> parameters)
         {
-            if (!IsCommandSupported(commandName))
+            return commandName switch
             {
-                return;
-            }
-
-            switch (commandName)
-            {
-                case ClickCommand:
-                    Click(parameters);
-                    break;
-                case DoubleClickCommand:
-                    DoubleClick(parameters);
-                    break;
-                case DragAndDropCommand:
-                    DragAndDrop(parameters);
-                    break;
-            }
+                ClickCommand => Click(parameters),
+                DoubleClickCommand => DoubleClick(parameters),
+                DragAndDropCommand => DragAndDrop(parameters),
+                ScrollToCommand => ScrollTo(parameters),
+                _ => CommandResponse.FailedEmptyResponse,
+            };
         }
 
-        void Click(IDictionary<string, object> parameters)
+        CommandResponse Click(IDictionary<string, object> parameters)
         {
             if (parameters.TryGetValue("element", out var val))
             {
-                ClickElement((AppiumElement)val);
+                AppiumElement? element = GetAppiumElement(parameters["element"]);
+                if (element == null)
+                {
+                    return CommandResponse.FailedEmptyResponse;
+                }
+                return ClickElement(element);
             }
             else if (parameters.TryGetValue("x", out var x) &&
                      parameters.TryGetValue("y", out var y))
             {
-                ClickCoordinates(Convert.ToSingle(x), Convert.ToSingle(y));
+                return ClickCoordinates(Convert.ToSingle(x), Convert.ToSingle(y));
             }
+
+            return CommandResponse.FailedEmptyResponse;
         }
 
-        void ClickElement(AppiumElement element)
+        CommandResponse ClickElement(AppiumElement element)
         {
             try
             {
                 element.Click();
+                return CommandResponse.SuccessEmptyResponse;
             }
             catch (InvalidOperationException)
             {
-                ProcessException();
+                return ProcessException();
             }
             catch (WebDriverException)
             {
-                ProcessException();
+                return ProcessException();
             }
 
-            void ProcessException()
+            CommandResponse ProcessException()
             {
                 // Some elements aren't "clickable" from an automation perspective (e.g., Frame renders as a Border
                 // with content in it; if the content is just a TextBlock, we'll end up here)
@@ -88,10 +91,11 @@ namespace UITest.Appium
                 // All is not lost; we can figure out the location of the element in in the application window and Tap in that spot
                 PointF p = ElementToClickablePoint(element);
                 ClickCoordinates(p.X, p.Y);
+                return CommandResponse.SuccessEmptyResponse;
             }
         }
 
-        void ClickCoordinates(float x, float y)
+        CommandResponse ClickCoordinates(float x, float y)
         {
             OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
             var sequence = new ActionSequence(touchDevice, 0);
@@ -99,36 +103,113 @@ namespace UITest.Appium
             sequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
             sequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
             _appiumApp.Driver.PerformActions(new List<ActionSequence> { sequence });
+
+            return CommandResponse.SuccessEmptyResponse;
         }
 
-        void DoubleClick(IDictionary<string, object> parameters)
+        CommandResponse DoubleClick(IDictionary<string, object> parameters)
         {
-            var element = (AppiumElement)parameters["element"];
+            var element = GetAppiumElement(parameters["element"]);
 
             OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
             var sequence = new ActionSequence(touchDevice, 0);
             sequence.AddAction(touchDevice.CreatePointerMove(element, 0, 0, TimeSpan.FromMilliseconds(5)));
+
             sequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
             sequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
-            sequence.AddAction(touchDevice.CreatePause(TimeSpan.FromMilliseconds(600)));
+            sequence.AddAction(touchDevice.CreatePause(TimeSpan.FromMilliseconds(250)));
             sequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
             sequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
             _appiumApp.Driver.PerformActions(new List<ActionSequence> { sequence });
+
+            return CommandResponse.SuccessEmptyResponse;
         }
 
-        void DragAndDrop(IDictionary<string, object> actionParams)
+        CommandResponse DragAndDrop(IDictionary<string, object> actionParams)
         {
-            var sourceElement = (AppiumElement)actionParams["sourceElement"];
-            var destinationElement = (AppiumElement)actionParams["destinationElement"];
+            AppiumElement? sourceAppiumElement = GetAppiumElement(actionParams["sourceElement"]);
+            AppiumElement? destinationAppiumElement = GetAppiumElement(actionParams["destinationElement"]);
 
-            OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
-            var sequence = new ActionSequence(touchDevice, 0);
-            sequence.AddAction(touchDevice.CreatePointerMove(sourceElement, 0, 0, TimeSpan.FromMilliseconds(5)));
-            sequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
-            sequence.AddAction(touchDevice.CreatePause(TimeSpan.FromSeconds(1))); // Have to pause so the device doesn't think we are scrolling
-            sequence.AddAction(touchDevice.CreatePointerMove(destinationElement, 0, 0, TimeSpan.FromSeconds(1)));
-            sequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
-            _appiumApp.Driver.PerformActions(new List<ActionSequence> { sequence });
+            if (sourceAppiumElement != null && destinationAppiumElement != null)
+            {
+                OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+                var sequence = new ActionSequence(touchDevice, 0);
+                sequence.AddAction(touchDevice.CreatePointerMove(sourceAppiumElement, 0, 0, TimeSpan.FromMilliseconds(5)));
+                sequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+                sequence.AddAction(touchDevice.CreatePause(TimeSpan.FromSeconds(1))); // Have to pause so the device doesn't think we are scrolling
+                sequence.AddAction(touchDevice.CreatePointerMove(destinationAppiumElement, 0, 0, TimeSpan.FromSeconds(1)));
+                sequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+                _appiumApp.Driver.PerformActions(new List<ActionSequence> { sequence });
+
+                return CommandResponse.SuccessEmptyResponse;
+            }
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        CommandResponse ScrollTo(IDictionary<string, object> parameters)
+        {
+            // This method will keep scrolling in the specified direction until it finds an element 
+            // which matches the query, or until it times out.
+
+            bool down = !parameters.TryGetValue("down", out object? val) || (bool)val;
+            string toElementId = (string)parameters["elementId"];
+
+            // First we need to determine the area within which we'll make our scroll gestures
+            var window = _appiumApp?.Driver.Manage().Window 
+                ?? throw new InvalidOperationException("Element to scroll within not specified, and no Window available. Cannot scroll.");
+            Size scrollAreaSize = window.Size;
+
+            var x = scrollAreaSize.Width / 2;
+            var windowHeight = scrollAreaSize.Height;
+            var topEdgeOfScrollAction = windowHeight * 0.1;
+            var bottomEdgeOfScrollAction = windowHeight * 0.5;
+            var startY = down ? bottomEdgeOfScrollAction : topEdgeOfScrollAction;
+            var endY = down ? topEdgeOfScrollAction : bottomEdgeOfScrollAction;
+
+            var timeout = TimeSpan.FromSeconds(15);
+            DateTime start = DateTime.Now;
+
+            while (true)
+            {
+                try
+                {
+                    IUIElement found = _appiumApp.FindElement(toElementId);
+
+                    if (found != null)
+                    {
+                        // Success!
+                        return CommandResponse.SuccessEmptyResponse;
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    // Haven't found it yet, keep scrolling
+                }
+
+                long elapsed = DateTime.Now.Subtract(start).Ticks;
+                if (elapsed >= timeout.Ticks)
+                {
+                    Debug.WriteLine($">>>>> {elapsed} ticks elapsed, timeout value is {timeout.Ticks}");
+                    throw new TimeoutException($"Timed out scrolling to {toElementId}");
+                }
+
+                var scrollAction = new TouchAction(_appiumApp.Driver).Press(x, startY).MoveTo(x, endY).Release();
+                scrollAction.Perform();
+            }
+        }
+
+        static AppiumElement? GetAppiumElement(object element)
+        {
+            if (element is AppiumElement appiumElement)
+            {
+                return appiumElement;
+            }
+            else if (element is AppiumDriverElement driverElement)
+            {
+                return driverElement.AppiumElement;
+            }
+
+            return null;
         }
 
         static PointF ElementToClickablePoint(AppiumElement element)

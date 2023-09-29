@@ -8,14 +8,14 @@ namespace UITest.Appium.NUnit
         IServerContext? _context;
         protected TestDevice _testDevice;
 
-
         public UITestContextBase(TestDevice testDevice)
         {
             _testDevice = testDevice;
         }
 
-        protected static IUIClientContext? UITestContext { get { return _uiTestContext; } }
-        protected static TestDevice Device 
+        public static IUIClientContext? UITestContext { get { return _uiTestContext; } }
+
+        public TestDevice Device 
         {
             get 
             {
@@ -25,7 +25,7 @@ namespace UITest.Appium.NUnit
             }
         }
 
-        protected static IApp App 
+        public IApp App 
         {
             get 
             {

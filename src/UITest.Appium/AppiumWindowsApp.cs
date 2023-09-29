@@ -28,7 +28,14 @@ namespace UITest.Appium
             }
         }
 
-        public override IElement FindElement(string id)
+#nullable disable
+        public override IUIElement FindElement(string id)
+        {
+            return Query.ByAccessibilityId(id).FirstOrDefault();
+        }
+#nullable enable
+
+        public override IReadOnlyCollection<IUIElement> FindElements(string id)
         {
             return Query.ByAccessibilityId(id);
         }

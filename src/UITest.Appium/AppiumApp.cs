@@ -9,28 +9,26 @@ namespace UITest.Appium
     {
         protected readonly AppiumDriver _driver;
         protected readonly IConfig _config;
-        protected readonly ICommandExecution _commandExecutor;
+        protected readonly AppiumCommandExecutor _commandExecutor;
 
         public AppiumApp(AppiumDriver driver, IConfig config)
         {
-            _commandExecutor = new AppiumCommandExecutor();
             _driver = driver;
             _config = config;
 
+            _commandExecutor = new AppiumCommandExecutor();
             _commandExecutor.AddCommandGroup(new AppiumPointerActions(this));
-            _commandExecutor.AddCommandGroup(new AppiumTextInputActions());
+            _commandExecutor.AddCommandGroup(new AppiumTextActions());
+            _commandExecutor.AddCommandGroup(new AppiumGeneralActions());
+            _commandExecutor.AddCommandGroup(new AppiumVirtualKeyboardActions(this));
         }
 
         public abstract ApplicationState AppState { get; }
-        public virtual IElementQueryable Query => new AppiumQueryable(this);
+        public virtual IUIElementQueryable Query => new AppiumQueryable(this);
         public IConfig Config => _config;
         public AppiumDriver Driver => _driver;
         public ICommandExecution CommandExecutor => _commandExecutor;
-
-        public virtual IElement FindElement(string id)
-        {
-            return Query.ById(id);
-        }
+        public string ElementTree => _driver.PageSource;
 
         public void Click(float x, float y)
         {
@@ -40,8 +38,6 @@ namespace UITest.Appium
                 { "y", y }
             });
         }
-
-        public string ElementTree { get { return _driver.PageSource; } }
 
         public FileInfo Screenshot(string fileName)
         {
@@ -57,7 +53,25 @@ namespace UITest.Appium
             return file;
         }
 
-        public virtual IElement FindElement(IQuery query)
+        public byte[] Screenshot()
+        {
+            if (_driver == null)
+            {
+                throw new NullReferenceException("Screenshot: _driver is null");
+            }
+
+            Screenshot screenshot = _driver.GetScreenshot();
+            return screenshot.AsByteArray;
+        }
+
+#nullable disable
+        public virtual IUIElement FindElement(string id)
+        {
+            return Query.ById(id).FirstOrDefault();
+        }
+#nullable enable
+
+        public virtual IUIElement FindElement(IQuery query)
         {
             AppiumQuery? appiumQuery = query as AppiumQuery;
             if (appiumQuery is not null)
@@ -68,6 +82,24 @@ namespace UITest.Appium
             var queryString = query.ToString() ?? throw new InvalidOperationException($"{nameof(FindElement)} could not get query string");
             var q = new AppiumQuery(queryString);
             return q.FindElement(this);
+        }
+
+        public virtual IReadOnlyCollection<IUIElement> FindElements(string id)
+        {
+            return Query.ById(id);
+        }
+
+        public virtual IReadOnlyCollection<IUIElement> FindElements(IQuery query)
+        {
+            AppiumQuery? appiumQuery = query as AppiumQuery;
+            if (appiumQuery is not null)
+            {
+                return appiumQuery.FindElements(this);
+            }
+
+            var queryString = query.ToString() ?? throw new InvalidOperationException($"{nameof(FindElement)} could not get query string");
+            var q = new AppiumQuery(queryString);
+            return q.FindElements(this);
         }
 
         protected static void SetGeneralAppiumOptions(IConfig config, AppiumOptions appiumOptions)

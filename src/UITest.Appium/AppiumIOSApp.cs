@@ -12,6 +12,7 @@ namespace UITest.Appium
             : base(new IOSDriver(remoteAddress, GetOptions(config)), config)
         {
             _commandExecutor.AddCommandGroup(new AppiumIOSPointerActions(this));
+            _commandExecutor.AddCommandGroup(new AppiumIOSVirtualKeyboardActions(this));
         }
 
         public override ApplicationState AppState {

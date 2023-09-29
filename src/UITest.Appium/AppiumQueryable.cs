@@ -2,7 +2,7 @@
 
 namespace UITest.Appium
 {
-    public class AppiumQueryable : IElementQueryable
+    public class AppiumQueryable : IUIElementQueryable
     {
         protected readonly AppiumApp _appiumApp;
 
@@ -11,30 +11,30 @@ namespace UITest.Appium
             _appiumApp = appiumApp ?? throw new ArgumentNullException(nameof(appiumApp));
         }
 
-        public virtual IElement ById(string id)
+        public virtual IReadOnlyCollection<IUIElement> ById(string id)
         {
-            return AppiumQuery.ById(id).FindElement(_appiumApp);
+            return AppiumQuery.ById(id).FindElements(_appiumApp);
         }
 
-        public virtual IElement ByAccessibilityId(string name)
+        public virtual IReadOnlyCollection<IUIElement> ByAccessibilityId(string name)
         {
-            return AppiumQuery.ByAccessibilityId(name).FindElement(_appiumApp);
+            return AppiumQuery.ByAccessibilityId(name).FindElements(_appiumApp);
         }
 
-        public virtual IElement ByClass(string className)
+        public virtual IReadOnlyCollection<IUIElement> ByClass(string className)
         {
-            return AppiumQuery.ByClass(className).FindElement(_appiumApp);
+            return AppiumQuery.ByClass(className).FindElements(_appiumApp);
         }
 
-        public virtual IElement ByName(string name)
+        public virtual IReadOnlyCollection<IUIElement> ByName(string name)
         {
-            return AppiumQuery.ByName(name).FindElement(_appiumApp);
+            return AppiumQuery.ByName(name).FindElements(_appiumApp);
         }
 
-        public virtual IElement ByQuery(string query)
+        public virtual IReadOnlyCollection<IUIElement> ByQuery(string query)
         {
             var appiumQuery = new AppiumQuery(query);
-            return appiumQuery.FindElement(_appiumApp);
+            return appiumQuery.FindElements(_appiumApp);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using System.Collections.Immutable;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using UITest.Core;
 
@@ -67,7 +68,8 @@ namespace UITest.Appium
             return new AppiumQuery(string.Format(ClassQuery, classQuery));
         }
 
-        public IElement FindElement(AppiumApp appiumApp)
+#nullable disable
+        public IUIElement FindElement(AppiumApp appiumApp)
         {
             // e.g. class=button&id=MyButton
             string[] querySplit = _queryStr.Split(QuerySeparatorToken);
@@ -80,9 +82,14 @@ namespace UITest.Appium
             }
 
             var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
-            AppiumElement foundElement = appiumApp.Driver.FindElement(queryBy) ?? throw new Exception("Element was not found");
+            var foundElement = appiumApp.Driver.FindElements(queryBy).FirstOrDefault();
 
-            for(int i = 1; i < querySplit.Length; i++)
+            if (foundElement == null)
+            {
+                return null;
+            }
+
+            for (int i = 1; i < querySplit.Length; i++)
             {
                 foundElement = FindElement(foundElement, querySplit[i]);
             }
@@ -90,7 +97,49 @@ namespace UITest.Appium
             return new AppiumDriverElement(foundElement, appiumApp);
         }
 
-        public IElement FindElement(AppiumElement element, AppiumApp appiumApp)
+        public IReadOnlyCollection<IUIElement> FindElements(AppiumApp appiumApp)
+        {
+            // e.g. class=button&id=MyButton
+            string[] querySplit = _queryStr.Split(QuerySeparatorToken);
+            string queryStr = querySplit[0];
+            string[] argSplit = queryStr.Split('=');
+
+            if (argSplit.Length != 2)
+            {
+                throw new ArgumentException("Invalid Query");
+            }
+
+            var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
+            var foundElements = appiumApp.Driver.FindElements(queryBy);
+
+            // TODO: What is the expected way to handle multiple queries when multiple elements are returned?
+            //for(int i = 1; i < querySplit.Length; i++)
+            //{
+            //    foundElement = FindElement(foundElement, querySplit[i]);
+            //}
+
+            return foundElements.Select(e => new AppiumDriverElement(e, appiumApp)).ToList();
+        }
+#nullable enable
+
+        public IReadOnlyCollection<IUIElement> FindElements(AppiumElement element, AppiumApp appiumApp)
+        {
+            string[] querySplit = _queryStr.Split(QuerySeparatorToken);
+
+            AppiumElement appiumElement = element;
+            string queryStr = querySplit[0];
+            string[] argSplit = queryStr.Split('=');
+            var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
+            var foundElements = element.FindElements(queryBy);
+            //for (int i = 0; i < querySplit.Length; i++)
+            //{
+            //    appiumElement = FindElement(appiumElement, querySplit[i]);
+            //}
+
+            return foundElements.Select(e => new AppiumDriverElement((AppiumElement)e, appiumApp)).ToList();
+        }
+
+        public IUIElement FindElement(AppiumElement element, AppiumApp appiumApp)
         {
             string[] querySplit = _queryStr.Split(QuerySeparatorToken);
 
@@ -101,6 +150,18 @@ namespace UITest.Appium
             }
 
             return new AppiumDriverElement(appiumElement, appiumApp);
+        }
+
+        private static IReadOnlyCollection<AppiumElement> FindElements(AppiumElement element, string query)
+        {
+            var argSplit = query.Split('=');
+            if (argSplit.Length != 2)
+            {
+                throw new ArgumentException("Invalid Query");
+            }
+
+            var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
+            return element.FindElements(queryBy).Select(e => (AppiumElement)e).ToList();
         }
 
         private static AppiumElement FindElement(AppiumElement element, string query)

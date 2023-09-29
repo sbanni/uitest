@@ -21,50 +21,65 @@ namespace UITest.Appium
 
         public bool IsCommandSupported(string commandName)
         {
-            return _commands.Contains(commandName.ToLowerInvariant());
+            return _commands.Contains(commandName, StringComparer.OrdinalIgnoreCase);
         }
 
-        public void Execute(string commandName, IDictionary<string, object> parameters)
+        public CommandResponse Execute(string commandName, IDictionary<string, object> parameters)
         {
-            if (!IsCommandSupported(commandName))
+            return commandName switch
             {
-                return;
-            }
-
-            switch (commandName)
-            {
-                case DoubleClickCommand:
-                    DoubleClick(parameters);
-                    break;
-                case DragAndDropCommand:
-                    DragAndDrop(parameters);
-                    break;
-            }
+                DoubleClickCommand => DoubleClick(parameters),
+                DragAndDropCommand => DragAndDrop(parameters),
+                _ => CommandResponse.FailedEmptyResponse,
+            };
         }
 
-        void DoubleClick(IDictionary<string, object> parameters)
+        CommandResponse DoubleClick(IDictionary<string, object> parameters)
         {
-            var element = (AppiumElement)parameters["element"];
+            var element = GetAppiumElement(parameters["element"]);
 
-            _appiumApp.Driver.ExecuteScript("macos: doubleClick", new Dictionary<string, object>
+            if (element != null)
+            {
+                _appiumApp.Driver.ExecuteScript("macos: doubleClick", new Dictionary<string, object>
                 {
-                    { "elementId", element.GetProperty("id") },
+                    { "elementId", element.Id },
                 });
+            }
+            return CommandResponse.SuccessEmptyResponse;
         }
 
-        void DragAndDrop(IDictionary<string, object> actionParams)
+        CommandResponse DragAndDrop(IDictionary<string, object> actionParams)
         {
-            var sourceElement = (AppiumElement)actionParams["sourceElement"];
-            var destinationElement = (AppiumElement)actionParams["destinationElement"];
+            AppiumElement? sourceAppiumElement = GetAppiumElement(actionParams["sourceElement"]);
+            AppiumElement? destinationAppiumElement = GetAppiumElement(actionParams["destinationElement"]);
 
-            _appiumApp.Driver.ExecuteScript("macos: clickAndDragAndHold", new Dictionary<string, object>
+            if (sourceAppiumElement != null && destinationAppiumElement != null)
+            {
+                _appiumApp.Driver.ExecuteScript("macos: clickAndDragAndHold", new Dictionary<string, object>
                 {
                     { "holdDuration", .1 }, // Length of time to hold before releasing
                     { "duration", 1 }, // Length of time to hold after click before start dragging
                     { "velocity", 2500 }, // How fast to drag
-                    { "sourceElementId", sourceElement.Id },
-                    { "destinationElementId", destinationElement.Id },
+                    { "sourceElementId", sourceAppiumElement.Id },
+                    { "destinationElementId", destinationAppiumElement.Id },
                 });
+                return CommandResponse.SuccessEmptyResponse;
+            }
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        static AppiumElement? GetAppiumElement(object element)
+        {
+            if (element is AppiumElement appiumElement)
+            {
+                return appiumElement;
+            }
+            else if (element is AppiumDriverElement driverElement)
+            {
+                return driverElement.AppiumElement;
+            }
+
+            return null;
         }
     }
 }

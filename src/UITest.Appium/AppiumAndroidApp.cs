@@ -2,7 +2,6 @@
 using OpenQA.Selenium.Appium.Android;
 using OpenQA.Selenium.Appium.Enums;
 using UITest.Core;
-using UITest.Simulator;
 
 namespace UITest.Appium
 {
@@ -11,6 +10,7 @@ namespace UITest.Appium
         private AppiumAndroidApp(Uri remoteAddress, IConfig config)
             : base(new AndroidDriver(remoteAddress, GetOptions(config)), config)
         {
+            _commandExecutor.AddCommandGroup(new AppiumAndroidVirtualKeyboardActions(this));
         }
 
         public static AppiumAndroidApp CreateAndroidApp(Uri remoteAddress, IConfig config)
@@ -27,17 +27,17 @@ namespace UITest.Appium
             else
                 Environment.SetEnvironmentVariable("SWIFTSHADER_DISABLE_DEBUGGER_WAIT_DIALOG", "1");
 
-            // Will check if AVD with device name already exists first and not reinstall
-            AndroidEmulator.AvdCreate(device, force: avdForce);
-            // StartEmulator will return immediately if emulator is already running
-            AndroidEmulator.StartEmulator(device);
-            // TODO: Check for installed package first?
-            AndroidEmulator.InstallPackage(apkPath, pkgName, outDir);
+            //// Will check if AVD with device name already exists first and not reinstall
+            //AndroidEmulator.AvdCreate(device, force: avdForce);
+            //// StartEmulator will return immediately if emulator is already running
+            //AndroidEmulator.StartEmulator(device);
+            //// TODO: Check for installed package first?
+            //AndroidEmulator.InstallPackage(apkPath, pkgName, outDir);
 
             return new AppiumAndroidApp(remoteAddress, config);
         }
 
-        public override IElementQueryable Query => new AppiumAndroidQueryable(this);
+        public override IUIElementQueryable Query => new AppiumAndroidQueryable(this);
 
         public override ApplicationState AppState {
             get {
