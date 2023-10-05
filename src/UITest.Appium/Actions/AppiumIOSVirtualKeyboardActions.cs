@@ -5,7 +5,7 @@ namespace UITest.Appium
 {
     public class AppiumIOSVirtualKeyboardActions : AppiumVirtualKeyboardActions
     {
-        public AppiumIOSVirtualKeyboardActions(AppiumApp app) 
+        public AppiumIOSVirtualKeyboardActions(AppiumApp app)
             : base(app)
         {
         }
@@ -14,7 +14,7 @@ namespace UITest.Appium
         {
             try
             {
-                if (_app.Driver.IsKeyboardShown() == true)
+                if (_app.Driver.IsKeyboardShown())
                 {
                     _app.Driver.HideKeyboard("return");
                 }

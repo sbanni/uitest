@@ -4,7 +4,7 @@ namespace UITest.Appium
 {
     public class AppiumAndroidQueryable : AppiumQueryable
     {
-        public AppiumAndroidQueryable(AppiumApp appiumApp) 
+        public AppiumAndroidQueryable(AppiumApp appiumApp)
             : base(appiumApp)
         {
         }

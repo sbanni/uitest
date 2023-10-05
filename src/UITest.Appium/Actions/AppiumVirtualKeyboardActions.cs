@@ -5,7 +5,7 @@ namespace UITest.Appium
     public class AppiumVirtualKeyboardActions : ICommandExecutionGroup
     {
         const string IsKeyboardShownCommand = "isKeyboardShown";
-        const string HideKeyboardCommand = "hideKeyboard";
+        const string HideKeyboardCommand = "dismissKeyboard";
 
         protected readonly AppiumApp _app;
         readonly List<string> _commands = new()

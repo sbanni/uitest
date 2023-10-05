@@ -1,11 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
-using OpenQA.Selenium.Appium.MultiTouch;
-using OpenQA.Selenium.Appium;
 using UITest.Core;
-using OpenQA.Selenium;
-using System.Xml.Linq;
 
 namespace UITest.Appium
 {
@@ -61,12 +57,12 @@ namespace UITest.Appium
 
         public static void DismissKeyboard(this IApp app)
         {
-            app.CommandExecutor.Execute("dismissKeyboard", null);
+            app.CommandExecutor.Execute("dismissKeyboard", ImmutableDictionary<string, object>.Empty);
         }
 
         public static bool IsKeyboardShown(this IApp app)
         {
-            var response = app.CommandExecutor.Execute("isKeyboardShow", null);
+            var response = app.CommandExecutor.Execute("isKeyboardShown", ImmutableDictionary<string, object>.Empty);
             var responseValue = response?.Value ?? false;
             return (bool)responseValue;
         }
@@ -155,8 +151,8 @@ namespace UITest.Appium
 
             while (true)
             {
-                var elementText = app.FindElement(automationId).GetText();
-                if (elementText != null && elementText.Contains(text, StringComparison.OrdinalIgnoreCase))
+                var element = app.FindElements(automationId).FirstOrDefault();
+                if (element != null && (element.GetText()?.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false))
                 {
                     return true;
                 }

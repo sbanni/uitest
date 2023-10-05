@@ -48,7 +48,7 @@ namespace UITest.Appium
         {
             var element = parameters["element"];
             var attributeName = (string)parameters["attributeName"];
-            
+
             if (element is AppiumElement appiumElement)
             {
                 return new CommandResponse(appiumElement.GetAttribute(attributeName), CommandResponseResult.Success);

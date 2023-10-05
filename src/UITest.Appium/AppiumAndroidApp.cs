@@ -33,8 +33,9 @@ namespace UITest.Appium
             //AndroidEmulator.StartEmulator(device);
             //// TODO: Check for installed package first?
             //AndroidEmulator.InstallPackage(apkPath, pkgName, outDir);
-
-            return new AppiumAndroidApp(remoteAddress, config);
+            var androidApp = new AppiumAndroidApp(remoteAddress, config);
+            androidApp.Driver.ActivateApp(pkgName);
+            return androidApp;
         }
 
         public override IUIElementQueryable Query => new AppiumAndroidQueryable(this);

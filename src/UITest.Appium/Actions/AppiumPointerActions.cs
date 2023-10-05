@@ -155,7 +155,7 @@ namespace UITest.Appium
             string toElementId = (string)parameters["elementId"];
 
             // First we need to determine the area within which we'll make our scroll gestures
-            var window = _appiumApp?.Driver.Manage().Window 
+            var window = _appiumApp?.Driver.Manage().Window
                 ?? throw new InvalidOperationException("Element to scroll within not specified, and no Window available. Cannot scroll.");
             Size scrollAreaSize = window.Size;
 
